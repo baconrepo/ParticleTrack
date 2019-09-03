@@ -1,0 +1,71 @@
+#from __future__ import division, unicode_literals, print_function  # for compatibility with Python 3 and 3
+
+import pims
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import trackpy as tp
+
+
+frames=pims.ImageSequence('newdata/images*.png', as_grey=True)
+plt.imshow(frames[0])
+print(frames)
+print(frames[0])
+
+#f = tp.locate(frames[0],75,minmass=250000,max_iterations=1000,percentile=99,invert=True)
+f=tp.locate(frames[0],21,minmass=3000,percentile=70,invert=True)
+#f = tp.locate(frames[0],diameter = , minmass=400.0, maxsize=None, separation=50, noise_size=1,percentile=99, smoothing_size=None,threshold=None,invert=True, topn=None, preprocess= True, max_iterations=10, filter_before=None, filter_after=True, characterize=True)
+#g = tp.locate(frames[0],65,percentile=99,invert=True)
+
+#h = tp.locate(frames[0],65,minmass=10000,percentile=99,invert=True)
+
+print(f.head())
+print(f.tail())
+
+fig, ax =plt.subplots()
+ax.hist(f['mass'],bins=20)
+ax.set(xlabel='mass',ylabel='count')
+
+
+plt.figure()
+tp.annotate(f,frames[0])
+#plt.figure()
+#tp.annotate(g,frames[0])
+#plt.figure()
+#tp.annotate(h,frames[0])
+
+tp.subpx_bias(f)
+
+f=tp.batch(frames[:200],21,minmass=6000,percentile=70,invert=True)
+
+
+plt.show()
+
+
+
+
+tra=tp.link_df(f,5,memory=3)     ##max displacement b/w frames, memory b/w frames
+tra.head()
+tra.tail()
+
+tra1=tp.filter_stubs(tra,10)   ##keep only trajectories that last 10 frames
+
+print('Before filter:', tra['particle'].nunique())
+
+print('After filter:', tra1['particle'].nunique())
+
+plt.figure()
+tp.mass_size(tra1.groupby('particle').mean());   ##plots size vs mass
+
+plt.figure()
+tp.plot_traj(tra1);
+
+d =tp.compute_drift(tra1)
+d.plot
+#plt.show()
+
+tm=tp.subtract_drift(tra1.copy(),d)
+ax=tp.plot_traj(tm)
+plt.show()
+
+#im=tp.imsd(tm,
+
